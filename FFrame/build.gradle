@@ -1,0 +1,38 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.2"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies{
+
+    // ↓↓↓ 系统 ↓↓↓
+    compile 'com.android.support:recyclerview-v7:26.+'
+    compile 'com.android.support:design:26.+'
+    // ↑↑↑ 系统 ↑↑↑
+
+    // ↓↓↓ 自有 ↓↓↓
+    compile files('src/main/jniLibs/hzdodo_2.0.jar')
+//    compile(name:'hzdodo', ext:'aar')
+    // ↑↑↑ 自有 ↑↑↑
+
+//    // ↓↓↓ squareup ↓↓↓
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    compile 'com.squareup.okio:okio:1.13.0'
+    compile 'com.squareup.wire:wire-runtime:2.2.0'
+//    // ↑↑↑ squareup ↑↑↑
+}
