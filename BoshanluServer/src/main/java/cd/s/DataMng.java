@@ -90,6 +90,13 @@ public class DataMng
 	public static final String CHECK_POST_URL = "forum.php?mod=ajax&action=checkpostrule&ac=newthread&mobile=2";
 	public static final String CHECK_UPDATE_URL = "forum.php?mod=viewthread&tid=" + POST_TID + "&mobile=2";
 
+	public final String URL_FORUMS = "api/mobile/index.php?module=forumindex&version=4";
+	public final String URL_POST = "forum.php?mod=guide&view=%s&page=%s&mobile=2";
+	public final String URL_NEW_POST = "api/mobile/index.php?module=forumindex&version=4";
+/*
+*  String type = (currentType == TYPE_HOT) ? "hot" : "new";
+        String url = "forum.php?mod=guide&view=" + type + "&page=" + CurrentPage + "&mobile=2";*/
+
 	/**
 	 *
 	 * */
@@ -150,6 +157,7 @@ public class DataMng
 	IntegralMng integralMng;
 
 	String KEY, PROTOCOL, PROTOCOL_S, // 协议
+			DOMAIN_BSL, // 主域名
 			DOMAIN_ISMP, // 域名
 			DOMAIN_ZQ, // 志强评论等
 			DOMAIN_SEARCH, // 搜索域名
@@ -302,6 +310,24 @@ public class DataMng
 		}
 		return null;
 	}
+
+	public String getDomainBSL()
+	{
+		try
+		{
+			if(Empty.isEmpty(DOMAIN_BSL))
+			{
+				DOMAIN_BSL = isFormalServer ?  JniData.getInstance().getDomainZQ() : DR.CHANNEL_TESTING.equals(CHANNEL) ? "124.127.180.233:8400/" : "192.168.11.19:8400/";
+			}
+			return DOMAIN_BSL;
+		}
+		catch(Exception exc)
+		{
+			Logger.e("DataMng getDomainBSL == " + exc.toString());
+		}
+		return null;
+	}
+
 	public String getDomainZQ()
 	{
 		try
@@ -1419,6 +1445,28 @@ public class DataMng
 	{
 		request.requestColumn(formatSourceColumnUrl(), iColumn, mode);
 	}
+
+	// 请求所有版块列表
+	public void reqForums(Async.IColumn iColumn)
+	{
+		this.reqForums(iColumn, CacheMode.CACHE_THEN_REQUEST_NETWORK);
+	}
+
+	private void reqForums(final Async.IColumn iColumn, final CacheMode mode)
+	{
+		request.requestColumn(formatSourceForumUrl(), iColumn, mode);
+	}
+
+	public void reqPostList()
+	{
+		this.reqPostList(String type, int page, iBlock, isLocalCachePriority && iBlock != null ? CacheMode.CACHE_THEN_REQUEST_NETWORK : CacheMode.REQUEST_NETWORK_BY_CACHE);
+	}
+
+	private void reqPostList(final String type, final int page, final Async.IBlock iBlock, final CacheMode mode)
+	{
+		String url = formatPostColumnUrl(type, page);
+		request.requestHomeArts(url, StrUtil.getMD5(url), iBlock, mode);
+	}
 	
 	public void postCheckStock(final int productId, final String sha1, final Async.ICheckStockCoins iReq)
 	{
@@ -1774,6 +1822,24 @@ public class DataMng
 
 		String url = formatColumnUrl(columnId);
 		request.requestHomeArts(formatColumnUrl(columnId), StrUtil.getMD5(url), iBlock, mode);
+	}
+
+	// 请求首页文章列表
+	public void reqHomePostArts(final String columnId, Async.IBlock iBlock, final boolean isLocalCachePriority)
+	{
+		this.reqHomeArts(columnId, iBlock, isLocalCachePriority && iBlock != null ? CacheMode.CACHE_THEN_REQUEST_NETWORK : CacheMode.REQUEST_NETWORK_BY_CACHE);
+	}
+
+	private void reqHomePostArts(final String type, final int page, final Async.IBlock iBlock, final CacheMode mode)
+	{
+		if (Empty.isEmpty(type))
+		{
+			onCheckFail(iBlock, ECode.E_PARAME, "参数有误");
+			return;
+		}
+
+		String url = formatPostColumnUrl(type, page);
+		request.requestHomeArts(url, StrUtil.getMD5(url), iBlock, mode);
 	}
 
 	// TODO 请求Video栏目中的视频
@@ -2150,6 +2216,11 @@ public class DataMng
 			userMng.reqNewUserAction(hm, iReq);
 		}
 	}
+
+	public String formatPosts(String type, int page)
+	{
+		return getProtocolSSL() + getDomainBSL() + String.format(URL_POST, type, page);
+	}
 	
 	/**
 	 * 获取MyOrders
@@ -2214,6 +2285,11 @@ public class DataMng
 		return getProtocolSSL() + getDomainISMP() + URL_COLUMN;
 	}
 
+	private String formatSourceForumUrl()
+	{
+		return getProtocolSSL() + getDomainBSL() + URL_FORUMS;
+	}
+
 	/**
 	 * http://ismp.i-newsroom.top/channels/enapp/columns/5943
 	 * a694a770d137a603e5e0/stories.json 文章列表数据地址
@@ -2221,6 +2297,11 @@ public class DataMng
 	private String formatColumnUrl(String columnId)
 	{
 		return getProtocolSSL() + getDomainISMP() + String.format(URL_COLUMNS, columnId);
+	}
+
+	private String formatPostColumnUrl(String type, int page)
+	{
+		return getProtocolSSL() + getDomainBSL() + String.format(URL_POST, type, page);
 	}
 
 	/**
